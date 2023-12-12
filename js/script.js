@@ -4,12 +4,15 @@ const moves = document.getElementById("moves-count");
 const control = document.querySelector(".controls-container");
 const gameContainer = document.querySelector(".game-container");
 const stopBtn = document.getElementById("stop");
+const result = document.getElementById("result");
 
 let interval;
 let movesCount = 0;
 let seconds = 0;
 let minitues = 0;
-
+let firstCard = 0;
+let secondCard = 0;
+let winCount = 0;
 const items = [
   { name: "bee", image: "bee.png" },
   { name: "crocodile", image: "crocodile.png" },
@@ -38,6 +41,11 @@ const timeGenerator = () => {
   timeField.innerHTML = `<span> Time: </span> ${minitueValues}:${secondValues}`;
 };
 
+const movesCounter = () => {
+  movesCount += 1;
+  moves.innerHTML = `<span>Moves:</span>${movesCount}`;
+};
+
 const generateRandom = (size = 4) => {
   let cardValues = [];
 
@@ -56,7 +64,6 @@ const generateRandom = (size = 4) => {
 
 const matrixGenerator = (cardValues, size = 4) => {
   cardValues = [...cardValues, ...cardValues];
-  console.log(cardValues);
   cardValues.sort(() => Math.random() - 0.5);
 
   for (let i = 0; i < size * size; i++) {
@@ -70,6 +77,48 @@ const matrixGenerator = (cardValues, size = 4) => {
   }
 
   gameContainer.style.gridTemplateColumns = `repeat(${size},auto)`;
+
+  let firstCardValue;
+  let secondCardValue;
+  const cards = document.querySelectorAll(".card-container");
+
+  cards.forEach((card) => {
+    card.addEventListener("click", () => {
+      if (!card.classList.contains("matched")) {
+        card.classList.add("flipped");
+        if (!firstCard) {
+          firstCard = card;
+          firstCardValue = card.getAttribute("data-card-value");
+        } else {
+          movesCounter();
+          secondCard = card;
+          secondCardValue = card.getAttribute("data-card-value");
+
+          if (firstCardValue == secondCardValue) {
+            firstCard.classList.add("matched");
+            secondCard.classList.add("matched");
+            firstCard = false;
+
+            winCount += 1;
+
+            if (winCount == Math.floor(cardValues.length) / 2) {
+              result.innerHTML = `<h2>You Won</h2>
+              <h4>Moves: ${movesCount}</h4>`;
+              stopGame();
+            }
+          } else {
+            let [tempFirst, tempSecond] = [firstCard, secondCard];
+            firstCard = false;
+            secondCard = false;
+            let delay = setTimeout(() => {
+              tempFirst.classList.remove("flipped");
+              tempSecond.classList.remove("flipped");
+            }, 500);
+          }
+        }
+      }
+    });
+  });
 };
 
 startBtn.addEventListener("click", () => {
@@ -84,8 +133,18 @@ startBtn.addEventListener("click", () => {
   initializer();
 });
 
+stopBtn.addEventListener(
+  "click",
+  (stopGame = () => {
+    control.classList.remove("hide");
+    stopBtn.classList.add("hide");
+    startBtn.classList.remove("hide");
+    clearInterval(interval);
+  })
+);
+
 const initializer = () => {
   let cardValues = generateRandom();
-  console.log(cardValues);
+
   matrixGenerator(cardValues);
 };
